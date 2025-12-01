@@ -1,16 +1,19 @@
+from zipfile import ZipFile
+
 # Create the project files
 project_path = "/mnt/data/webdev-final-project"
 import os
 os.makedirs(project_path, exist_ok=True)
 
-index_html = """
-<!DOCTYPE html>
-<html>
+index_html = """<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Shopping List (LocalStorage + JSON)</title>
+    <meta charset="UTF-8">
+    <title>Shopping List – WebDev Final Project</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <h1>Shopping List (LocalStorage + JSON)</h1>
 
     <div class="input-group">
@@ -19,27 +22,161 @@ index_html = """
     </div>
 
     <div class="input-group">
-        <label>Price (₱):</label>
-        <input type="number" id="price">
+        <label>Price:</label>
+        <input type="number" id="price" step="0.01">
     </div>
 
     <button onclick="addItem()">Add Item</button>
     <button class="danger" onclick="removeItem()">Remove Last Item</button>
 
-    <h2 id="totalCost">Total Cost: ₱0.00</h2>
-
     <div id="tableDiv"></div>
+
+    <h2 id="totalCost">Total Cost: ₱0.00</h2>
 
     <script src="script.js"></script>
 </body>
-</html>
-"""
+</html>"""
 
-# Empty CSS
-style_css = ""
+style_css = """body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    margin: 40px;
+}
 
-# Empty JS
-script_js = ""
+h1 {
+    margin-bottom: 10px;
+}
+
+.input-group {
+    margin-bottom: 10px;
+}
+
+label {
+    font-weight: bold;
+}
+
+input {
+    padding: 6px;
+    margin-left: 5px;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+}
+
+button {
+    padding: 8px 12px;
+    margin-right: 5px;
+    border: none;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+button.danger {
+    background: #dc3545;
+}
+
+button.danger:hover {
+    background: #a71d2a;
+}
+
+table {
+    width: 60%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+}
+
+th, td {
+    border: 1px solid black;
+    padding: 10px;
+}
+
+th {
+    background: #eaeaea;
+}
+
+#totalCost {
+    margin-top: 20px;
+}"""
+
+script_js = """let items = [];
+
+window.onload = function () {
+    let saved = localStorage.getItem("shoppingList");
+
+    if (saved) {
+        items = JSON.parse(saved);
+        displayTable();
+    }
+};
+
+function saveToLocalStorage() {
+    localStorage.setItem("shoppingList", JSON.stringify(items));
+}
+
+function addItem() {
+    let name = document.getElementById("itemName").value.trim();
+    let price = parseFloat(document.getElementById("price").value);
+
+    if (name === "" || isNaN(price) || price <= 0) {
+        alert("Please enter a valid item name and price greater than 0.");
+        return;
+    }
+
+    items.push({ itemName: name, itemPrice: price });
+
+    saveToLocalStorage();
+    displayTable();
+    clearInputs();
+}
+
+function removeItem() {
+    if (items.length === 0) return;
+
+    items.pop();
+    saveToLocalStorage();
+    displayTable();
+}
+
+function clearInputs() {
+    document.getElementById("itemName").value = "";
+    document.getElementById("price").value = "";
+}
+
+function displayTable() {
+    let html = `
+        <table>
+            <tr>
+                <th>Item Name</th>
+                <th>Price (₱)</th>
+            </tr>
+    `;
+
+    let total = 0;
+
+    items.forEach(obj => {
+        html += `
+            <tr>
+                <td>${obj.itemName}</td>
+                <td>${obj.itemPrice.toFixed(2)}</td>
+            </tr>
+        `;
+        total += obj.itemPrice;
+    });
+
+    html += "</table>";
+
+    document.getElementById("tableDiv").innerHTML = html;
+
+    document.getElementById("totalCost").innerHTML =
+        "Total Cost: ₱" + total.toFixed(2);
+}"""
 
 # Write files
 with open(f"{project_path}/index.html", "w") as f:
@@ -52,9 +189,7 @@ with open(f"{project_path}/script.js", "w") as f:
     f.write(script_js)
 
 # Create ZIP
-from zipfile import ZipFile
 zip_path = "/mnt/data/webdev-final-project.zip"
-
 with ZipFile(zip_path, 'w') as zipf:
     zipf.write(f"{project_path}/index.html", arcname="index.html")
     zipf.write(f"{project_path}/style.css", arcname="style.css")
